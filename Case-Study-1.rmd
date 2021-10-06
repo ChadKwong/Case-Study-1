@@ -1,4 +1,59 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
 # Question 1
 ```{r}
+beers = read.csv(file.choose())
+breweries = read.csv(file.choose())
+colnames(breweries)[1] <- "Brewery_id"
+StateCount = as.data.frame(table(breweries$State))
+colnames(StateCount) <- c("State", "Count")
+StateCount <- StateCount %>% arrange(Count, decreasing = TRUE)
+StateCount
+```
 
+# Question 2
+```{r}
+table(beers$IBU, useNA = "always")
+AllData = merge(beers, breweries, by = "Brewery_id")
+colnames(AllData)[2] <- "Beer_Name"
+colnames(AllData)[8] <- "Brewery_Name"
+head(AllData)
+tail(AllData)
+CleanData <- AllData %>% filter(!is.na(AllData$IBU))
+CleanData
+```
+
+# Question 3
+```{r}
+table(is.na(AllData))
+AllData %>% filter(is.na(AllData$IBU))
+AllData %>% filter(is.na(AllData$ABV))
+```
+
+# Question 4
+```{r}
+StateIBU <- CleanData %>% group_by(State) %>% summarise(Median=median(IBU))
+StateIBU <- StateIBU %>% arrange(Median)
+StateIBU
+StateABV <- CleanData %>% group_by(State) %>% summarise(Median=median(ABV))
+IBUPlot = ggplot(StateIBU, aes(x = State, y = Median, fill = State)) + geom_bar(stat = "identity") + coord_flip()
+IBUPlot
+```
+
+# Question 5
+```{r}
+
+```
+
+# Question 6
+```{r}
+
+```
+
+# Question 7
+```{r}
+ggplot(CleanData, aes(x = ABV, y = IBU)) + geom_point()
 ```
