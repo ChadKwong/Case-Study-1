@@ -1,59 +1,168 @@
-```{r}
+```{r setup, include=FALSE}
+#loading all appropriate libraries
 library(dplyr)
 library(ggplot2)
+
+#loading all datasets
+Beers = read.csv(file.choose())
+Breweries = read.csv(file.choose())
 ```
 
 # Question 1
+## The following code uses the arrange and count functions to display the count of breweries per state. GGPlot2 is then used to plot the data in a visual representation.
 ```{r}
-beers = read.csv(file.choose())
-breweries = read.csv(file.choose())
-colnames(breweries)[1] <- "Brewery_id"
-StateCount = as.data.frame(table(breweries$State))
+#Chad's Code
+colnames(Breweries)[1] <- "Brewery_id"
+StateCount = as.data.frame(table(Breweries$State))
 colnames(StateCount) <- c("State", "Count")
-StateCount <- StateCount %>% arrange(Count, decreasing = TRUE)
+StateCount <- StateCount %>% arrange(Count)
 StateCount
+
+#Brittany's Code
+Count_Of_Breweries_By_State = count(Breweries, State)
+ggplot_Breweries_By_State = ggplot(data=Count_Of_Breweries_By_State, aes(x=State,y=n,fill=State)) + geom_bar(stat="identity") + theme(axis.text.x=element_text(angle = 90,vjust = 0.5, hjust = 1)) + labs(title="Count of Breweries by State",x= "State",y="Count of States") + geom_text(aes(label=n),vjust=1.6,size=3.5)
+ggplot_Breweries_By_State
 ```
+From the plot, we can observe that Colorado California, and Michigan have the highest amount of breweries where as DC, South Dakota, West Verginia, and North Dakota have the least amount at 1 brewery.
 
 # Question 2
+## The following code merges the data sets together.
 ```{r}
-table(beers$IBU, useNA = "always")
-AllData = merge(beers, breweries, by = "Brewery_id")
+# Chad's Code
+table(Beers$IBU, useNA = "always")
+AllData = merge(Beers, Breweries, by = "Brewery_id")
 colnames(AllData)[2] <- "Beer_Name"
 colnames(AllData)[8] <- "Brewery_Name"
-head(AllData)
-tail(AllData)
-CleanData <- AllData %>% filter(!is.na(AllData$IBU))
-CleanData
+
+#Brittany's Code
+BB_Merged = merge(Beers,Breweries,by.x = "Brewery_id",by.y="Brew_ID")
 ```
 
 # Question 3
+## The following code uses the na.omit function to detect and remove missing values.
 ```{r}
+#Chad's Code
 table(is.na(AllData))
 AllData %>% filter(is.na(AllData$IBU))
 AllData %>% filter(is.na(AllData$ABV))
+CleanData <- AllData %>% filter(!is.na(AllData$IBU))
+
+#Brittany's Code
+Beers <- na.omit(Beers)
+Breweries <- na.omit(Breweries)
 ```
 
 # Question 4
+## The code below uses the summaraise function in conjunction with the group_by function to calculate the medians. The medians are then plotted to bar plots using GGPlot2.
 ```{r}
-StateIBU <- CleanData %>% group_by(State) %>% summarise(Median=median(IBU))
-StateIBU <- StateIBU %>% arrange(Median)
-StateIBU
-StateABV <- CleanData %>% group_by(State) %>% summarise(Median=median(ABV))
-IBUPlot = ggplot(StateIBU, aes(x = State, y = Median, fill = State)) + geom_bar(stat = "identity") + coord_flip()
+#Chad's Code
+StateIBUMedian <- CleanData %>% group_by(State) %>% summarise(Median=median(IBU))
+StateABVMedian <- CleanData %>% group_by(State) %>% summarise(Median=median(ABV))
+
+IBUPlot = ggplot(StateIBUMedian, aes(x = State, y = Median, fill = State)) + geom_bar(stat = "identity", width = .9) + ggtitle("Plot of Median IBU per State") + geom_text(aes(label=Median),vjust=0.5, hjust=-.3 ,size=3.5) + coord_flip() 
 IBUPlot
+
+ABVPlot = ggplot(StateABVMedian, aes(x = State, y = Median, fill = State)) + geom_bar(stat = "identity") + coord_flip() + ggtitle("Plot of Median ABV per State") + geom_text(aes(label=Median),vjust=0.5, hjust=-.2 ,size=3.5)
+ABVPlot
+
+#Brittany's Code
+ABV_IBU_State_Data=cbind(numeric_columns,BB_Merged$State)
+count(ABV_IBU_State_Data, BB_Merged$State)
+Num_State = cbind(numeric_columns,BB_Merged$State)
+#This is the numeric columns plus the state column
+Median_ABV = aggregate(Num_State$ABV~BB_Merged$State, data=Num_State, FUN=function(Num_State) c(median=median(Num_State), count=length(Num_State)))
+Median_ABV = aggregate(Num_State$ABV~BB_Merged$State, data=Num_State, FUN=function(Num_State) c(median=median(Num_State), count=length(Num_State)))
+Num_State %>% group_by(BB_Merged$State) %>% summarise(median_IBU = median(IBU))
+var=Num_State %>% group_by(BB_Merged$State) %>% summarise(median_IBU = median(IBU))
+
+ggplot(data=var,aes(x=var$`BB_Merged$State`,y=var$median_IBU,fill=var$`BB_Merged$State`))+geom_histogram(stat="identity")+theme(axis.text.x=element_text(angle = 90,vjust = 0.5, hjust = 1))+labs(title="Median IBU by State",x= "State",y="Count of Median")
+Med_ABV=Num_State %>% group_by(BB_Merged$State) %>% summarise(Median_ABV = median(ABV))
+
+ggplot(data=var,aes(x=var$`BB_Merged$State`,y=Med_ABV$Median_ABV,fill=var$`BB_Merged$State`)) + geom_histogram(stat="identity") + theme(axis.text.x=element_text(angle = 90,vjust = 0.5, hjust = 1)) + labs(title="Median ABV by State",x= "State",y="Count of Median") + geom_text(aes(label=Med_ABV$Median_ABV),vjust=1.6,size=3.5)
 ```
+We can see that Maine has the highest median IBU as well as the highest median ABV. There also seems to be a disparity between median IBU across all states where as all states seem to have similar median ABV values.
 
 # Question 5
+## The code below uses the summarise function combined with the group_by function to create a dataframe of all max values per state. The which.max function is then used as an index to the row with the max value overall. The final result is then displayed for both IBU and ABV
 ```{r}
+#Chad's Code
+#Max IBU
+StateIBU <- CleanData %>% group_by(State) %>% summarise(Max_IBU = max(IBU))
+StateIBU[which.max(StateIBU$Max_IBU),]
+#Max ABV
+StateABV <- CleanData %>% group_by(State) %>% summarise(Max_ABV = max(ABV), Mean= mean(ABV))
+StateABV[which.max(StateABV$Max_ABV),]
+StateABV
 
+#Brittany's Code
+#Finding Max ABV
+max_ABV = Num_State %>% group_by(BB_Merged$State) %>%summarise(max_ABV = max(ABV))
+max(max_ABV$max_ABV)
+which(max_ABV$max_ABV==0.125)
+max_ABV = data.frame(max_ABV)
+max_ABV[18,]
+
+#Finding Max IBU
+max_IBU = Num_State %>% group_by(BB_Merged$State) %>% summarise(max_IBU = max(IBU))
+max(max_IBU$max_IBU)
+which(max_IBU$max_IBU==138)
+max_IBU = data.frame(max_IBU)
+max_IBU[38,]
 ```
+The highest ABV across all states lies in Kentucky at 12.5%, and the highest IBU across all states lies in Oregon at 138 IBU.
 
 # Question 6
+## The code below uses the summary function to list out the statistical values. We then use GGPlot2 to plot a histogram of the ABV as well as a box plot of the ABV
 ```{r}
+#Chad's Code
+summary(CleanData$ABV)
 
+#Brittany's Code
+summary(BB_Merged$ABV)
+ggplot(data=BB_Merged,aes(x=ABV,fill=State)) + geom_histogram(stat="count") + theme_classic() + labs(title="Distribution of ABV", x="ABV", y="Count of ABV")
+boxplot(BB_Merged$ABV,ylab="ABV")
 ```
+The histogram presents a positive skewness. This means that although the median ABV is 5.7%, the mean ABV slightly higher at almost 6%. From this we can infer that the general audience will be more inclined to purchase a higher ABV beer when available.
 
 # Question 7
+## The folowing code uses GGplot2 to plot the IBU vs ABV as a scatterplot using the geom_point function
 ```{r}
-ggplot(CleanData, aes(x = ABV, y = IBU)) + geom_point()
+#Chad's Code
+ggplot(CleanData, aes(x = ABV, y = IBU, color = -IBU)) + geom_point(position = "jitter") + geom_smooth(method = lm, color = "red") + ggtitle("Scatter Plot of IBU vs ABV")
+
+#Brittany's Code
 ```
+From the Scatter Plot, we can see a positive correlation between ABV and IBU, however, due to the higher variance as ABV increases, we cannot say that the relationship between ABV and IBU follows a linear relationship.
+
+# Question 8
+## The following code filters the data to only display Ales and IPAs. From there, a new column is added to simplify classifications of the style. After that a KNN model is used to predict each entry as an ale or IPA based off of IBU and ABV only.
+```{r}
+# filtering the data to only display Ales and IPAs
+Ales <- CleanData %>% filter(grepl('Ale', CleanData$Style) | grepl("IPA", CleanData$Style))
+
+#writting a for loop to create a new binary column for classifying each row as either an Ale or an IPA
+for (j in 1:length(Ales$Style))
+{
+  if (grepl("IPA", Ales$Style[j]) == TRUE)
+  {
+    Ales$IPA_Or_Ale[j] = "IPA"
+  }
+  else
+  {
+    Ales$IPA_Or_Ale[j] = "Ale"
+  }
+}
+# transforming the new column into a factor
+Ales$IPA_Or_Ale = as.factor(Ales$IPA_Or_Ale)
+
+# Creating the test and training sets
+trainIPA = IPA_Ales[trainIndices,]
+testIPA = IPA_Ales[-trainIndices,]
+
+# Creating and running the model
+classifications = knn(trainIPA[,c(4,5)], testIPA[,c(4,5)], trainIPA$IPA_Or_Ale, k = 5)
+
+# Displaying the results of the model as a confusion matrix
+confusionMatrix(classifications, testIPA$IPA_Or_Ale)
+```
+From the confusion matrix, we can see an 84% accuracy when predicting ales vs IPAs using only the ABV and IBU variables.
